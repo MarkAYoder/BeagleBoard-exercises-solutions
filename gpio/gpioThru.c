@@ -37,13 +37,13 @@ From https://www.ridgerun.com/developer/wiki/index.php/Gpio-int-test.c
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>	// Defines signal-handling functions (i.e. trap Ctrl-C)
+#include "gpio-utils.h"
 
  /****************************************************************
  * Constants
  ****************************************************************/
  
 #undef DEBUG
-#define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
 #define MAX_BUF 64
 
@@ -60,177 +60,6 @@ void signal_handler(int sig)
 {
 	printf( "Ctrl-C pressed, cleaning up and exiting..\n" );
 	keepgoing = 0;
-}
-
-/****************************************************************
- * gpio_export
- ****************************************************************/
-int gpio_export(unsigned int gpio)
-{
-	int fd, len;
-	char buf[MAX_BUF];
- 
-	fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);
-	if (fd < 0) {
-		perror("gpio/export");
-		return fd;
-	}
- 
-	len = snprintf(buf, sizeof(buf), "%d", gpio);
-	write(fd, buf, len);
-	close(fd);
- 
-	return 0;
-}
-
-/****************************************************************
- * gpio_unexport
- ****************************************************************/
-int gpio_unexport(unsigned int gpio)
-{
-	int fd, len;
-	char buf[MAX_BUF];
- 
-	fd = open(SYSFS_GPIO_DIR "/unexport", O_WRONLY);
-	if (fd < 0) {
-		perror("gpio/export");
-		return fd;
-	}
- 
-	len = snprintf(buf, sizeof(buf), "%d", gpio);
-	write(fd, buf, len);
-	close(fd);
-	return 0;
-}
-
-/****************************************************************
- * gpio_set_dir
- ****************************************************************/
-int gpio_set_dir(unsigned int gpio, unsigned int out_flag)
-{
-	int fd, len;
-	char buf[MAX_BUF];
- 
-	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR  "/gpio%d/direction", gpio);
- 
-	fd = open(buf, O_WRONLY);
-	if (fd < 0) {
-		perror("gpio/direction");
-		return fd;
-	}
- 
-	if (out_flag)
-		write(fd, "out", 4);
-	else
-		write(fd, "in", 3);
- 
-	close(fd);
-	return 0;
-}
-
-/****************************************************************
- * gpio_set_value
- ****************************************************************/
-int gpio_set_value(unsigned int gpio, unsigned int value)
-{
-	int fd, len;
-	char buf[MAX_BUF];
- 
-	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
- 
-	fd = open(buf, O_WRONLY);
-	if (fd < 0) {
-		perror("gpio/set-value");
-		return fd;
-	}
- 
-	if (value)
-		write(fd, "1", 2);
-	else
-		write(fd, "0", 2);
- 
-	close(fd);
-	return 0;
-}
-
-/****************************************************************
- * gpio_get_value
- ****************************************************************/
-int gpio_get_value(unsigned int gpio, unsigned int *value)
-{
-	int fd, len;
-	char buf[MAX_BUF];
-	char ch;
-
-	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
- 
-	fd = open(buf, O_WRONLY);
-	if (fd < 0) {
-		perror("gpio/get-value");
-		return fd;
-	}
- 
-	printf("%d chars read\n",read(fd, &ch, 1));
-
-	if (ch != '0') {
-		*value = 1;
-	} else {
-		*value = 0;
-	}
- 
-	close(fd);
-	return 0;
-}
-
-
-/****************************************************************
- * gpio_set_edge
- ****************************************************************/
-
-int gpio_set_edge(unsigned int gpio, char *edge)
-{
-	int fd, len;
-	char buf[MAX_BUF];
-
-	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/edge", gpio);
- 
-	fd = open(buf, O_WRONLY);
-	if (fd < 0) {
-		perror("gpio/set-edge");
-		return fd;
-	}
- 
-	write(fd, edge, strlen(edge) + 1); 
-	close(fd);
-	return 0;
-}
-
-/****************************************************************
- * gpio_fd_open
- ****************************************************************/
-
-int gpio_fd_open(unsigned int gpio, unsigned int dir)
-{
-	int fd, len;
-	char buf[MAX_BUF];
-
-	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
- 
-	fd = open(buf, dir | O_NONBLOCK );
-
-	if (fd < 0) {
-		perror("gpio/fd_open");
-	}
-	return fd;
-}
-
-/****************************************************************
- * gpio_fd_close
- ****************************************************************/
-
-int gpio_fd_close(int fd)
-{
-	return close(fd);
 }
 
 /****************************************************************
@@ -258,14 +87,14 @@ int main(int argc, char **argv, char **envp)
 	// Set up input
 	gpioIn = atoi(argv[1]);
 	gpio_export(gpioIn);
-	gpio_set_dir(gpioIn, 0);
+	gpio_set_dir(gpioIn, "in");
 	gpio_set_edge(gpioIn, "both");
 	gpio_fdIn = gpio_fd_open(gpioIn, O_RDONLY);
 
 	// Set up output
 	gpioOut=atoi(argv[2]);
 	gpio_export(gpioOut);
-	gpio_set_dir(gpioOut, 1);
+	gpio_set_dir(gpioOut, "out");
 	gpio_fdOut = gpio_fd_open(gpioOut, O_WRONLY);
 
 	timeout = POLL_TIMEOUT;
