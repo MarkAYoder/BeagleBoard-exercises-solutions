@@ -1,0 +1,1 @@
+scp audio_thread.c root@beagle4:alsa/lab06c_audio_loopthru/.
