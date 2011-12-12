@@ -1,0 +1,10 @@
+vector_arg_c
+vector_arg_uc
+vector_arg_s
+vector_arg_us
+vector_arg_i
+vector_arg_ui
+vector_arg_ll
+vector_arg_ull
+vector_arg_f
+vector_arg_d

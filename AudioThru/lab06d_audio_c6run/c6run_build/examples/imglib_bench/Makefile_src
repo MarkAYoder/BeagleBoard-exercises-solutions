@@ -1,0 +1,233 @@
+#############################################################################
+# Makefile_src                                                              #
+#                                                                           #
+# Common Makefile for IMGLib benchmarks using C6Run                         #
+#############################################################################
+#
+#
+#############################################################################
+#                                                                           #
+#   Copyright (C) 2010 Texas Instruments Incorporated                       #
+#     http://www.ti.com/                                                    #
+#                                                                           #
+#############################################################################
+#
+#
+#############################################################################
+#                                                                           #
+#  Redistribution and use in source and binary forms, with or without       #
+#  modification, are permitted provided that the following conditions       #
+#  are met:                                                                 #
+#                                                                           #
+#    Redistributions of source code must retain the above copyright         #
+#    notice, this list of conditions and the following disclaimer.          #
+#                                                                           #
+#    Redistributions in binary form must reproduce the above copyright      #
+#    notice, this list of conditions and the following disclaimer in the    #
+#    documentation and/or other materials provided with the                 #
+#    distribution.                                                          #
+#                                                                           #
+#    Neither the name of Texas Instruments Incorporated nor the names of    #
+#    its contributors may be used to endorse or promote products derived    #
+#    from this software without specific prior written permission.          #
+#                                                                           #
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS      #
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT        #
+#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR    #
+#  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT     #
+#  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,    #
+#  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT         #
+#  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,    #
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY    #
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT      #
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE    #
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.     #
+#                                                                           #
+#############################################################################
+
+
+PROJNAME = $(notdir $(CURDIR))
+CUR_DIR = "."
+
+# Comment this out if you want to see full compiler and linker output.
+VERBOSE = @
+
+#   ----------------------------------------------------------------------------
+#   Name of the ARM GCC cross compiler & archiver
+#   ----------------------------------------------------------------------------
+ARM_TOOLCHAIN_PREFIX  ?= arm-none-linux-gnueabi-
+ifdef ARM_TOOLCHAIN_PATH
+ARM_CC := $(VERBOSE)$(ARM_TOOLCHAIN_PATH)/bin/$(ARM_TOOLCHAIN_PREFIX)gcc
+ARM_AR := $(VERBOSE)$(ARM_TOOLCHAIN_PATH)/bin/$(ARM_TOOLCHAIN_PREFIX)ar
+else
+ARM_CC := $(VERBOSE)$(ARM_TOOLCHAIN_PREFIX)gcc
+ARM_AR := $(VERBOSE)$(ARM_CROSS_COMPILE)ar
+endif
+
+# Pick up any ARM compiler and linker flags from the environment
+ARM_CFLAGS = $(CFLAGS) -DNOASSUME
+ARM_CFLAGS += -std=gnu99 \
+-Wdeclaration-after-statement -Wall -Wno-trigraphs \
+-fno-strict-aliasing -fno-common -fno-omit-frame-pointer \
+-c -O3
+ARM_LNKFLAGS = $(LDFLAGS)
+ARM_LNKFLAGS += -lpthread
+ARM_ARFLAGS = rcs
+
+
+#   ----------------------------------------------------------------------------
+#   Name of the DSP C6RUN compiler & archiver
+#   TI C6RunLib Frontend (if path variable provided, use it, otherwise assume 
+#   the tools are in the path)
+#   ----------------------------------------------------------------------------
+ifdef C6RUNLIB
+C6RUN_TOOLCHAIN_PREFIX=c6runlib-
+else
+C6RUN_TOOLCHAIN_PREFIX=c6runapp-
+endif
+ifdef C6RUN_TOOLCHAIN_PATH
+C6RUN_CC := $(VERBOSE)$(C6RUN_TOOLCHAIN_PATH)/bin/$(C6RUN_TOOLCHAIN_PREFIX)cc
+C6RUN_AR := $(VERBOSE)$(C6RUN_TOOLCHAIN_PATH)/bin/$(C6RUN_TOOLCHAIN_PREFIX)ar
+else
+C6RUN_CC := $(VERBOSE)$(C6RUN_TOOLCHAIN_PREFIX)cc
+C6RUN_AR := $(VERBOSE)$(C6RUN_TOOLCHAIN_PREFIX)ar
+endif
+
+C6RUN_LNKFLAGS =
+C6RUN_CFLAGS = -c -O3
+C6RUN_ARFLAGS = rcs
+
+
+# Includes for the build
+CINCLUDES = -I$(IMGLIB_INSTALL_DIR)/test_drivers/drivers/common \
+            -I$(IMGLIB_INSTALL_DIR)/include
+
+# C Sources to be built
+LOCAL_SOURCES       = $(PROJNAME)_d.c
+DATA_SOURCES        = $(PROJNAME)_idat.c $(PROJNAME)_odat.c
+NATURAL_C_SRC       = $(PROJNAME)_c.c
+INTRINSIC_DSP_SRC   = $(PROJNAME)_i.c
+COMMON_SRC          = mem_cpy.c support.c
+
+#Object files to be built
+
+EXEC_ARM_OBJS := $(LOCAL_SOURCES:%.c=gpp/%.o) \
+                 $(DATA_SOURCES:%.c=gpp/%.o) \
+                 $(COMMON_SRC:%.c=gpp/%.o)
+                 
+EXEC_DSP_OBJS := $(LOCAL_SOURCES:%.c=dsp/%.o) \
+                 $(DATA_SOURCES:%.c=dsp/%.o) \
+                 $(COMMON_SRC:%.c=dsp/%.o)
+ifdef C6RUNLIB
+# Library objects to be built
+LIB_ARM_OBJS := $(NATURAL_C_SRC:%.c=gpp_lib/%.o)
+LIB_DSP_OBJS := $(NATURAL_C_SRC:%.c=gpp_lib/%.o) $(INTRINSIC_DSP_SRC:%.c=dsp_lib/%.o)
+else
+EXEC_ARM_OBJS += $(NATURAL_C_SRC:%.c=gpp/%.o)
+EXEC_DSP_OBJS += $(NATURAL_C_SRC:%.c=dsp/%.o) $(INTRINSIC_DSP_SRC:%.c=dsp/%.o)
+endif
+
+
+#   ----------------------------------------------------------------------------
+#   Makefile targets
+#   ----------------------------------------------------------------------------
+.PHONY : dsp_exec gpp_exec dsp_lib gpp_lib dsp_clean gpp_clean all clean
+   
+all: dsp_exec gpp_exec
+
+clean: dsp_clean gpp_clean
+		@rm -rf *.o
+
+ifdef C6RUNLIB
+
+gpp_exec: gpp/.created gpp_lib/.created $(PROJNAME)_arm
+    
+$(PROJNAME)_arm: $(EXEC_ARM_OBJS) $(PROJNAME)_arm.lib 
+	@echo Linking $@ from $^...
+	$(ARM_CC) $(ARM_LNKFLAGS) -o $(PROJNAME)_arm $(EXEC_ARM_OBJS) $(PROJNAME)_arm.lib
+
+$(PROJNAME)_arm.lib: $(LIB_ARM_OBJS)
+	@echo Archiving $@ from $^...
+	$(ARM_AR) $(ARM_ARFLAGS) $@ $^
+
+gpp/%.o : %.c
+	@echo Compiling $@ from $<...
+	$(ARM_CC) $(ARM_CFLAGS) $(CINCLUDES) -o $@ $<
+  
+gpp_lib/%.o : %.c
+	@echo Compiling $@ from $<...
+	$(ARM_CC) $(ARM_CFLAGS) $(CINCLUDES) -o $@ $<
+  
+gpp_clean:
+	@rm -Rf $(PROJNAME)_arm $(PROJNAME)_arm.lib
+	@rm -Rf gpp/$(BUILD_TYPE) gpp_lib/$(BUILD_TYPE)
+
+  
+dsp_exec: dsp/.created dsp_lib/.created $(PROJNAME)_dsp
+
+$(PROJNAME)_dsp: $(EXEC_DSP_OBJS) $(PROJNAME)_dsp.lib
+	@echo Linking $@ from $^...
+	$(ARM_CC) $(ARM_LNKFLAGS) -o $(PROJNAME)_dsp $(EXEC_DSP_OBJS) $(PROJNAME)_dsp.lib
+
+$(PROJNAME)_dsp.lib:  $(LIB_DSP_OBJS)
+	@echo Archiving $@ from $^...
+	$(C6RUN_AR) $(C6RUN_ARFLAGS) $@ $^
+
+dsp/%.o : %.c
+	@echo Compiling $@ from $<...
+	$(ARM_CC) $(ARM_CFLAGS) $(CINCLUDES) -D_C6RUN_IN_USE_ -o $@ $<
+  
+dsp_lib/%.o : %.c
+	@echo Compiling $@ from $<...
+	$(C6RUN_CC) $(C6RUN_CFLAGS) $(CINCLUDES) -o $@ $<
+
+dsp_clean:
+	@rm -rf $(PROJNAME)_dsp $(PROJNAME)_dsp.lib
+	@rm -rf dsp/$(BUILD_TYPE) dsp_lib/$(BUILD_TYPE)
+
+%/.created:
+	@mkdir -p $(dir $@)
+	@chmod 777 $(dir $@)
+	@touch $@
+
+else
+
+gpp_exec: gpp/.created $(PROJNAME)_arm
+    
+$(PROJNAME)_arm: $(EXEC_ARM_OBJS)
+	@echo Linking $@ from $^...
+	$(ARM_CC) $(ARM_LNKFLAGS) -o $(PROJNAME)_arm $(EXEC_ARM_OBJS)
+
+gpp/%.o : %.c
+	@echo Compiling $@ from $<...
+	$(ARM_CC) $(ARM_CFLAGS) $(CINCLUDES) -o $@ $<
+  
+gpp_clean:
+	@rm -Rf $(PROJNAME)_arm $(PROJNAME)_arm.lib
+	@rm -Rf gpp/$(BUILD_TYPE) gpp_lib/$(BUILD_TYPE)
+
+  
+dsp_exec: dsp/.created $(PROJNAME)_dsp
+
+$(PROJNAME)_dsp: $(EXEC_DSP_OBJS)
+	@echo Linking $@ from $^...
+	$(C6RUN_CC) $(C6RUN_LNKFLAGS) -o $(PROJNAME)_dsp $(EXEC_DSP_OBJS)
+
+dsp/%.o : %.c
+	@echo Compiling $@ from $<...
+	$(C6RUN_CC) $(C6RUN_CFLAGS) $(CINCLUDES) -D_C6RUN_IN_USE_ -o $@ $<
+
+dsp_clean:
+	@rm -rf $(PROJNAME)_dsp $(PROJNAME)_dsp.lib
+	@rm -rf dsp/$(BUILD_TYPE) dsp_lib/$(BUILD_TYPE)
+
+  
+%/.created:
+	@mkdir -p $(dir $@)
+	@chmod 777 $(dir $@)
+	@touch $@
+
+
+endif
+  
+vpath %.c $(IMGLIB_INSTALL_DIR)/kernels/c:$(IMGLIB_INSTALL_DIR)/kernels/intrinsic:../common:$(IMGLIB_INSTALL_DIR)/test_drivers/drivers/$(PROJNAME)

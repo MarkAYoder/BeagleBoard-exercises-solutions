@@ -1,0 +1,23 @@
+Here is some code we used for benchmarking purposes. The idea is to be
+able to compare the speed of floating point operations with different
+setups (Kernels, compilers, etc).
+
+Bugs, doubts, patches and suggestions to info@emqbit.com.
+
+Thanks :)
+
+Check:
+
+http://www.linuxdevices.com/articles/AT5920399313.html
+
+In this article we didn't talk about soft-float builds. It is still
+useful. It could have been better... we know, we know.
+
+
+
+17-Dec-09:
+
+This source was only slightly modified to compile under the DSPEasy 
+framework due to lack of gettimeofday function under DSP/Bios.
+
+Makefile was replaced to build both ARM and DSP versions.

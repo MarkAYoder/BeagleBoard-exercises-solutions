@@ -1,0 +1,6 @@
+manual_inbuf_test
+manual_inbuf_global_test
+inbuf_test
+manual_outbuf_test
+manual_outbuf_global_test
+outbuf_test

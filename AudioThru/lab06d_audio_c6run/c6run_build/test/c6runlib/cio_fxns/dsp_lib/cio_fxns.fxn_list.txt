@@ -1,0 +1,5 @@
+cio_fxns_printf
+cio_fxns_scanf
+cio_fxns_create_file
+cio_fxns_write_file
+cio_fxns_read_file

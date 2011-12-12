@@ -1,0 +1,15 @@
+Compiling user sources for DSP.
+  /opt/toolchains/TI_CGT_C6000_7.2.0/bin/cl6x -mv64+ -c -q --display_error_number -O3 -I/opt/toolchains/TI_CGT_C6000_7.2.0/include -I/opt/toolchains/c6run_binary/bin/../include -eo=temp.o -ea=s -el=sa --obj_directory=. hello_world.c 
+Linking DSP side executable.
+  /opt/toolchains/TI_CGT_C6000_7.2.0/bin/cl6x --run_linker -c -q -w --priority --display_error_number --diag_suppress=10063 --diag_suppress=10247 --search_path=/opt/toolchains/TI_CGT_C6000_7.2.0/lib --output_file=hello_world_dsp.dsp_image.out --map_file=hello_world_dsp.dsp_image.map ./hello_world.temp.o   --library=/opt/toolchains/c6run_binary/bin/../lib/c6run_dsp/libc6rundspd.a /opt/toolchains/c6run_binary/bin/../lib/c6run_dsp/c6rundsp.cmd --library=rts64plus.lib
+<Linking>
+Converting DSP executable to C array...
+  /opt/toolchains/TI_CGT_C6000_7.2.0/bin/strip6x hello_world_dsp.dsp
+  Using od and sed to generate C file of DSP image data.
+Converting DSP executable data array to ARM object file...
+  /usr/bin/gcc -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfloat-abi=softfp -c -o _dsp_program_data_.o _dsp_program_data_.c
+Compiling and linking ARM loader components.
+Generating final ARM executable.
+  /usr/bin/gcc -march=armv7-a -mtune=cortex-a8 -mlittle-endian -mfloat-abi=softfp -lpthread -ldl -o hello_world_dsp /opt/toolchains/c6run_binary/bin/../lib/c6run_gpp/libc6rungpp_maind.a  _dsp_program_data_.o /opt/toolchains/c6run_binary/bin/../lib/c6run_gpp/libc6rungppd.a 
+Removing intermediate object files generated from source.
+rm -f ./hello_world.temp.o 

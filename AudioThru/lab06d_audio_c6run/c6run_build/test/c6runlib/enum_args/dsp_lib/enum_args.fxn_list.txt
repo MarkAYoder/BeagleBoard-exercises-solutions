@@ -1,0 +1,4 @@
+enum_args_print
+enum_args_print2
+enum_args_return
+enum_args_return2
