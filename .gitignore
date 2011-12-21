@@ -1,3 +1,5 @@
 DEBUG
 *.o
 *_DEBUG.Beagle
+app_AUDIO
+
