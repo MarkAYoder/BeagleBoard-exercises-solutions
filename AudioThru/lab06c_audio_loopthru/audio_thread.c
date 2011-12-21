@@ -49,7 +49,7 @@ static timestamp_t get_timestamp ()
 #define     RIGHT_GAIN       100
 
 //*  Parameters for audio thread execution **
-#define     BLOCKSIZE        48000
+#define     BLOCKSIZE        48000	// Number of bytes
 
 
 //*******************************************************************************
@@ -87,7 +87,7 @@ void *audio_thread_fxn( void *envByRef )
     snd_pcm_uframes_t exact_bufsize, request_bufsize;
     snd_pcm_t	*pcm_capture_handle, *pcm_output_handle;
 
-    int   blksize = BLOCKSIZE;	// Raw input or output frame size
+    int   blksize = BLOCKSIZE;	// Raw input or output frame size in bytes
     char *inputBuffer = NULL;	// Input buffer for driver to read into
     char *outputBuffer = NULL;	// Output buffer for driver to read from
 
@@ -98,7 +98,7 @@ void *audio_thread_fxn( void *envByRef )
     // ************************
 
     // Open an ALSA device channel for audio input
-    exact_bufsize = blksize/BYTESPERFRAME;
+    exact_bufsize = blksize/BYTESPERFRAME;	// Convert bytes to frames
     request_bufsize = exact_bufsize;
     DBG( "Requesting %d frame input buffer\n", (int) request_bufsize);
 
@@ -113,7 +113,7 @@ void *audio_thread_fxn( void *envByRef )
 		(int) request_bufsize, (int) exact_bufsize);
 	}
 
-    // Record that input OSS device was opened in initialization bitmask
+    // Record that input ALSA device was opened in initialization bitmask
     initMask |= INPUT_ALSA_INITIALIZED;
 
     blksize = exact_bufsize*BYTESPERFRAME;
