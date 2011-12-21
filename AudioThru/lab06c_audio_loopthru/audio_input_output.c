@@ -99,10 +99,10 @@ For this example, we assume that the soundcard can be configured for stereo play
     int rate = sampleRate;	/* Sample rate */
     unsigned int exact_rate;   		/* Sample rate returned by */
                       		/* snd_pcm_hw_params_set_rate_near */ 
-//    int dir;          /* exact_rate == rate --> dir = 0 */
+    int dir = 0;      /* exact_rate == rate --> dir = 0 */
                       /* exact_rate < rate  --> dir = -1 */
                       /* exact_rate > rate  --> dir = 1 */
-    int periods = 2;  /* Number of periods, See http://www.alsa-project.org/main/index.php/FramesPeriods */
+    unsigned int periods = 2;  /* Number of periods, See http://www.alsa-project.org/main/index.php/FramesPeriods */
     int request_periods;
 //    snd_pcm_uframes_t periodsize = 44100; /* Periodsize (bytes) */
 
@@ -160,7 +160,7 @@ The access type specifies the way in which multichannel data is stored in the bu
     request_periods = periods;
     DBG( "Requesting period count of %d\n", request_periods);
 //	Restrict a configuration space to contain only one periods count
-    err = snd_pcm_hw_params_set_periods_near(*pcm_handle, hwparams, &periods, 0);
+    err = snd_pcm_hw_params_set_periods_near(*pcm_handle, hwparams, &periods, &dir);
     if (err < 0) {
       ERR( "Error setting periods.\n");
       return AUDIO_FAILURE;
@@ -175,7 +175,8 @@ The unit of the buffersize depends on the function. Sometimes it is given in byt
     /* Set buffer size (in frames). The resulting latency is given by */
     /* latency = periodsize * periods / (rate * bytes_per_frame)     */
 //    *exact_bufsize_handle = (periodsize * periods) >> 2;
-    if (snd_pcm_hw_params_set_buffer_size_near(*pcm_handle, hwparams, exact_bufsize_handle) < 0) {
+    if (snd_pcm_hw_params_set_buffer_size_near(*pcm_handle, hwparams,
+		exact_bufsize_handle) < 0) {
       ERR( "Error setting buffersize.\n");
       return AUDIO_FAILURE;
     }
