@@ -33,12 +33,14 @@
 //*                                                                            **
 //*******************************************************************************
 int audio_io_setup(snd_pcm_t **pcm_handle, char *soundDevice, int sampleRate,
-			snd_pcm_stream_t stream, snd_pcm_uframes_t *exact_bufsize_handle )
+			snd_pcm_stream_t stream, 
+			snd_pcm_uframes_t *exact_bufsize_handle )
 {
     /* This structure contains information about    */
     /* the hardware and can be used to specify the  */      
     /* configuration to be used for the PCM stream. */ 
     snd_pcm_hw_params_t *hwparams;
+    int err;  	// Captures return value
 
 /*  
 The most important ALSA interfaces to the PCM devices are the "plughw" and the "hw" interface. If you use the "plughw" interface, you need not care much about the sound hardware. If your soundcard does not support the sample rate or sample format you specify, your data will be automatically converted. This also applies to the access type and the number of channels. With the "hw" interface, you have to check whether your hardware supports the configuration you would like to use.
@@ -100,7 +102,8 @@ For this example, we assume that the soundcard can be configured for stereo play
 //    int dir;          /* exact_rate == rate --> dir = 0 */
                       /* exact_rate < rate  --> dir = -1 */
                       /* exact_rate > rate  --> dir = 1 */
-    int periods = 4;  /* Number of periods, See http://www.alsa-project.org/main/index.php/FramesPeriods */
+    int periods = 2;  /* Number of periods, See http://www.alsa-project.org/main/index.php/FramesPeriods */
+    int request_periods;
 //    snd_pcm_uframes_t periodsize = 44100; /* Periodsize (bytes) */
 
 /*
@@ -153,11 +156,18 @@ The access type specifies the way in which multichannel data is stored in the bu
       return AUDIO_FAILURE;
     }
 
-    /* Set number of periods. Periods used to be called fragments. */ 
-    if (snd_pcm_hw_params_set_periods(*pcm_handle, hwparams, periods, 0) < 0) {
+    /* Set number of periods. Periods used to be called fragments. */
+    request_periods = periods;
+    DBG( "Requesting period count of %d\n", request_periods);
+//	Restrict a configuration space to contain only one periods count
+    err = snd_pcm_hw_params_set_periods_near(*pcm_handle, hwparams, &periods, 0);
+    if (err < 0) {
       ERR( "Error setting periods.\n");
       return AUDIO_FAILURE;
     }
+    if(request_periods != periods) {
+	DBG(" Requested %d periods, recieved %d\n", request_periods, periods);
+	}
 
 /*  
 The unit of the buffersize depends on the function. Sometimes it is given in bytes, sometimes the number of frames has to be specified. One frame is the sample data vector for all channels. For 16 Bit stereo data, one frame has a length of four bytes.
