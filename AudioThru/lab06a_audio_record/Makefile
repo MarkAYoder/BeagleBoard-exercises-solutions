@@ -37,7 +37,7 @@ AT := @
 # ---------------------------------------------------------------------
 CC      :=  $gcc 
 
-CFLAGS       := -Wall -fno-strict-aliasing -D_REENTRANT -march=armv7-a -lasound 
+CFLAGS       := -Wall -fno-strict-aliasing -D_REENTRANT -march=armv7-a -lasound -E
 LINKER_FLAGS := -lpthread
 
 DEBUG_CFLAGS   := -g -D_DEBUG_

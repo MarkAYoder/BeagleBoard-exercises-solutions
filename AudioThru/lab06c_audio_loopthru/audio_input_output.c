@@ -169,7 +169,7 @@ The unit of the buffersize depends on the function. Sometimes it is given in byt
       ERR( "Error setting buffersize.\n");
       return AUDIO_FAILURE;
     }
-    DBG( "exact_bufsize = %d\n", (int) *exact_bufsize_handle);
+    DBG( "audio_io: exact_bufsize = %d\n", (int) *exact_bufsize_handle);
  
 /* 
 If your hardware does not support a buffersize of 2^n, you can use the function snd_pcm_hw_params_set_buffer_size_near. This works similar to snd_pcm_hw_params_set_rate_near. Now we apply the configuration to the PCM device pointed to by pcm_handle. This will also prepare the PCM device.

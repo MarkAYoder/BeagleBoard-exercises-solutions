@@ -84,7 +84,7 @@ void *audio_thread_fxn( void *envByRef )
     unsigned  int   initMask =  0x0;               // Used to only cleanup items that were init'd
 
     // Input and output driver variables
-    snd_pcm_uframes_t exact_bufsize;
+    snd_pcm_uframes_t exact_bufsize, request_bufsize;
     snd_pcm_t	*pcm_capture_handle, *pcm_output_handle;
 
     int   blksize = BLOCKSIZE;	// Raw input or output frame size
@@ -99,42 +99,44 @@ void *audio_thread_fxn( void *envByRef )
 
     // Open an ALSA device channel for audio input
     exact_bufsize = blksize/BYTESPERFRAME;
+    request_bufsize = exact_bufsize;
+    DBG( "Requesting %d frame input buffer\n", (int) request_bufsize);
 
     if( audio_io_setup( &pcm_capture_handle, IN_SOUND_DEVICE, SAMPLE_RATE, 
-			SND_PCM_STREAM_CAPTURE, &exact_bufsize ) == AUDIO_FAILURE )
-    {
+		SND_PCM_STREAM_CAPTURE, &exact_bufsize ) == AUDIO_FAILURE ) {
         ERR( "Audio_input_setup failed in audio_thread_fxn\n\n" );
         status = AUDIO_THREAD_FAILURE;
         goto cleanup;
     }
-    DBG( "exact_bufsize = %d \n", (int) exact_bufsize);
+    if(exact_bufsize != request_bufsize) {
+	DBG( "Requested %d frame buffer, recieved %d frame input buffer\n", 
+		(int) request_bufsize, (int) exact_bufsize);
+	}
 
     // Record that input OSS device was opened in initialization bitmask
     initMask |= INPUT_ALSA_INITIALIZED;
 
     blksize = exact_bufsize*BYTESPERFRAME;
     // Create input buffer to read into from ALSA input device
-    if( ( inputBuffer = malloc( blksize ) ) == NULL )
-    {
+    if( ( inputBuffer = malloc( blksize ) ) == NULL ) {
         ERR( "Failed to allocate memory for input block (%d)\n", blksize );
         status = AUDIO_THREAD_FAILURE;
         goto  cleanup ;
     }
 
-    DBG( "Allocated input audio buffer of size %d to address %p\n", blksize, inputBuffer );
+    DBG( "Allocated input audio buffer of size %d bytes to address %p\n", blksize, inputBuffer );
 
     // Record that the input buffer was allocated in initialization bitmask
     initMask |= INPUT_BUFFER_ALLOCATED;
 
     // Create output buffer to write from into ALSA output device
-    if( ( outputBuffer = malloc( blksize ) ) == NULL )
-    {
+    if( ( outputBuffer = malloc( blksize ) ) == NULL ) {
         ERR( "Failed to allocate memory for output block (%d)\n", blksize );
         status = AUDIO_THREAD_FAILURE;
         goto  cleanup ;
     }
 
-    DBG( "Allocated output audio buffer of size %d to address %p\n", blksize, outputBuffer );
+    DBG( "Allocated output audio buffer of size %d bytes to address %p\n", blksize, outputBuffer );
 
     // Record that the output buffer was allocated in initialization bitmask
     initMask |= OUTPUT_BUFFER_ALLOCATED;
@@ -143,18 +145,24 @@ void *audio_thread_fxn( void *envByRef )
     // ******************************
 
     // Initialize the output ALSA device
-    DBG( "pcm_output_handle before audio_output_setup = %d\n", (int) pcm_output_handle);
+    DBG( "pcm_output_handle before audio_output_setup = %d\n", 
+		(int) pcm_output_handle);
 
-    DBG( "Requesting bufsize = %d\n", (int) exact_bufsize);
+    request_bufsize = exact_bufsize;
+    DBG( "Requesting %d frame output buffer\n", (int) request_bufsize);
+
     if( audio_io_setup( &pcm_output_handle, OUT_SOUND_DEVICE, SAMPLE_RATE, 
-			SND_PCM_STREAM_PLAYBACK, &exact_bufsize) == AUDIO_FAILURE )
-    {
+		SND_PCM_STREAM_PLAYBACK, &exact_bufsize) == AUDIO_FAILURE ) {
         ERR( "audio_output_setup failed in audio_thread_fxn\n" );
         status = AUDIO_THREAD_FAILURE;
         goto  cleanup ;
     }
-	DBG( "pcm_output_handle after audio_output_setup = %d\n", (int) pcm_output_handle);
-	DBG( "blksize = %d, exact_bufsize = %d\n", blksize, (int) exact_bufsize);
+    if(exact_bufsize != request_bufsize) {
+	DBG( "Requested %d frame buffer, recieved %d frame output buffer\n", 
+		(int) request_bufsize, (int) exact_bufsize);
+	}
+    DBG( "pcm_output_handle after audio_output_setup = %d\n", 
+		(int) pcm_output_handle);
 
     // Record that input ALSA device was opened in initialization bitmask
     initMask |= OUTPUT_ALSA_INITIALIZED;
@@ -171,12 +179,12 @@ void *audio_thread_fxn( void *envByRef )
 
     memset(outputBuffer, 0, blksize);		// Clear the buffer
 
-    printf( "Starting DSP..." );
-    t_start = get_timestamp();
+//    printf( "Starting DSP..." );
+//    t_start = get_timestamp();
 
-    t_proc = get_timestamp();
+//    t_proc = get_timestamp();
 
-    printf("%f s\n", (t_proc-t_start)/1000000.0);
+//    printf("%f s\n", (t_proc-t_start)/1000000.0);
 
     DBG( "Entering audio_thread_fxn processing loop...\n" );
 
@@ -191,7 +199,7 @@ void *audio_thread_fxn( void *envByRef )
 
     int i;
     memset(outputBuffer, 0, blksize);		// Clear the buffer
-    for(i=0; i<2; i++) {
+    for(i=0; i<4; i++) {
 	    while ((err = snd_pcm_writei(pcm_output_handle, outputBuffer, exact_bufsize)) < 0) {
 		snd_pcm_prepare(pcm_output_handle);
 		ERR( "<<<Pre Buffer Underrun >>> err=%d, errcnt=%d\n", err, errcnt);
