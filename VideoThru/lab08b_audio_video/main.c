@@ -70,7 +70,16 @@ int main(int argc, char *argv[])
 
     // Call audio thread function
     // audioThreadReturn = audio_thread_fxn( (void *) &audio_env );
-
+    if(launch_pthread(&audioThread, REALTIME, 99, &audio_thread_fxn, &audio_env) 
+		!= thread_SUCCESS){
+	ERR("pthread create failed for audio thread\n");
+	status = EXIT_FAILURE;
+	goto cleanup;
+	}
+    initMask |= AUDIOTHREADCREATED;    
+#ifdef _DEBUG_
+    sleep(1);
+#endif
     /* Create a thread for video */
     DBG( "Creating video thread\n" );
     printf( "\tPress Ctrl-C to exit\n" );
@@ -90,6 +99,7 @@ int main(int argc, char *argv[])
 cleanup:
     // Wait for the threads to end
     pthread_join(videoThread, (void **) &videoThreadReturn);
+    pthread_join(audioThread, (void **) &audioThreadReturn);
 
     /* Make video frame buffer invisible */
     system("cd ..; ./resetVideo");
