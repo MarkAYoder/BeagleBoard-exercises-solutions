@@ -39,7 +39,7 @@ int video_osd_setup( int * osdFdByRef, char * osdDevice,
                      unsigned char  trans, unsigned int ** osdDisplayByRef )
 {
     int size;
-    int i;
+    int i, j;
 
     *osdFdByRef = open( osdDevice, O_RDWR );
 
@@ -78,9 +78,16 @@ int video_osd_setup( int * osdFdByRef, char * osdDevice,
 			*osdDisplayByRef, size, size );
 
     // Fill the window with the new attribute value
-    for(i=0; i<size/4; i++) {
-	(*osdDisplayByRef)[i] = (trans<<24) | 0x00ff0000;	// AARRGGBB
-    }
+//    for(i=0; i<size/4; i++) {
+//	(*osdDisplayByRef)[i] = (trans<<24) | 0x00ff0000;	// AARRGGBB
+//    }
+    // Fill in the upper left half of the screen
+    for(j=0; j<osdInfo.yres/2; j++)
+	for(i=0; i<osdInfo.xres/2; i++) {
+	    (*osdDisplayByRef)[i + j*osdInfo.xres] = 
+		(trans<<24) | 0x00ff0000;	// AARRGGBB
+	}
+
     DBG( "\tFilled OSD window with pattern: 0x%08x\n" , (trans<<24) | 0x00ff0000);
 
     return VOSD_SUCCESS;
