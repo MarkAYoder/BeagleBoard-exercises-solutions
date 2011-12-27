@@ -117,10 +117,10 @@ int video_osd_place( unsigned int * osdDisplay,
     int i;
     unsigned  int      * displayOrigin;
 
-    displayOrigin = osdDisplay + ( y_offset * osdInfo.xres_virtual ) + x_offset;
+    displayOrigin = osdDisplay + ( y_offset * osdInfo.xres ) + x_offset;
 
     for( i = 0; i < y_picsize; i++ ) {
-        memcpy( displayOrigin + ( i * osdInfo.xres_virtual ), 
+        memcpy( displayOrigin + ( i * osdInfo.xres ), 
 		picture       + ((y_picsize-i-1) * x_picsize ), 
 		( x_picsize<<2 ) );
     }
@@ -193,17 +193,18 @@ int video_osd_circframe( unsigned int * osdDisplay, unsigned int  fillval )
 
     DBG( "Entering video_osd_circframe\n" );
 
-    x_scale = (float) (osdInfo.xres_virtual >> 1);
-    y_scale = (float) (osdInfo.yres >> 1);
+    // Center circle in upper left quarter
+    x_scale = (float) (osdInfo.xres >> 2);
+    y_scale = (float) (osdInfo.yres >> 2);
 
     DBG( "Entering video_osd_circframe for-loop\n" );
 
-    for( j = 0; j < osdInfo.yres; j++ ) {
+    for( j = 0; j < osdInfo.yres/2; j++ ) {
         y = ( float )j - y_scale;
-        for( i = 0; i < osdInfo.xres_virtual; i++ ) {
+        for( i = 0; i < osdInfo.xres/2; i++ ) {
             x = ( float )i - x_scale;
 	    if (((x*x /(x_scale*x_scale)) + (y*y/(y_scale*y_scale))) > 0.9) {
-                osdDisplay[ j * osdInfo.xres_virtual + i ] = fillval;
+                osdDisplay[i + j*osdInfo.xres] = fillval;
             }
         }
     }

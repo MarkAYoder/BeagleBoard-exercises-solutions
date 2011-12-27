@@ -128,7 +128,7 @@ void *video_thread_fxn( void *envByRef )
     initMask |= OSDSETUPCOMPLETE;
 
     // Place a circular alpha-blended OSD frame around video screen
-//    video_osd_circframe( osdDisplay, 0xa000ff00);  //AARRGGBB
+    video_osd_circframe( osdDisplay, 0xa000ff00);  //AARRGGBB
 
     // Open the display picture for OSD
     if( ( osdPictureFile = fopen( PICTUREFILE, "r" ) ) == NULL ) {
@@ -154,7 +154,7 @@ void *video_thread_fxn( void *envByRef )
 
     DBG( "OSD Picture read successful, placing picture\n" );
 
-//    video_osd_place(osdDisplay, picture, 50, 50, PICTURE_WIDTH, PICTURE_HEIGHT);
+    video_osd_place(osdDisplay, picture, 50, 50, PICTURE_WIDTH, PICTURE_HEIGHT);
 
     DBG( "Exited video_thread_fxn processing loop\n" );
 
