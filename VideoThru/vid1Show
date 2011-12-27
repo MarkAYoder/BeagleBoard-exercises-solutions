@@ -18,7 +18,7 @@ echo "1" > $fb1/overlays
 echo $video_size > $fb1/virtual_size
 
 echo $ovl0/output_size > $ovl1/output_size
-echo 500,100 > $ovl1/position
+echo 300,100 > $ovl1/position
 
 echo 255 > $ovl0/global_alpha
 echo 0   > $mgr0/alpha_blending_enabled
