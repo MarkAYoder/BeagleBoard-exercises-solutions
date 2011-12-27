@@ -84,10 +84,13 @@ int main(int argc, char *argv[])
 	}
     initMask |= VIDEOTHREADCREATED;    
 
-    sleep(10);
+//    sleep(5);
 //	videoThreadReturn = video_thread_fxn( (void *) &video_env );
 
 cleanup:
+    // Wait for the threads to end
+    pthread_join(videoThread, (void **) &videoThreadReturn);
+
     /* Make video frame buffer invisible */
     system("cd ..; ./resetVideo");
 
