@@ -6,7 +6,7 @@
 #include <stdlib.h>                             //  Always include this header
 
 #include <pthread.h>                            // posix thread definitions
-#include <thread.h>                             // header file for this module
+#include "thread.h"                             // header file for this module
 #include "debug.h"                              // provides DBG macro
 
 /**************************************************************************
