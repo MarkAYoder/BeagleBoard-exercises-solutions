@@ -25,7 +25,7 @@
 #define     V4L2_DEVICE    "/dev/video0"
 
 //* Input and Picture files **
-#define     PICTUREFILE     "Rose640x480a.bmp"
+#define     PICTUREFILE     "Rose640x480.bmp"
 
 //* Double-buffered display, triple-buffered capture **
 #define     NUM_DISP_BUFS   2
