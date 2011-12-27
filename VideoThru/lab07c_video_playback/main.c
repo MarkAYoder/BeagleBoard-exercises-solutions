@@ -50,6 +50,9 @@ int main(int argc, char *argv[])
     /* Set the signal callback for Ctrl-C */
     pSigPrev = signal( SIGINT, signal_handler );
 
+    /* Make video frame buffer visible */
+    system("cd ..; ./vid1Show");
+
     /* Create a thread for video */
     DBG( "Creating video thread\n" );
     printf( "\tPress Ctrl-C to exit\n" );
@@ -59,7 +62,8 @@ int main(int argc, char *argv[])
     initMask |= VIDEOTHREADCREATED;
 
 //cleanup:
-    /* Nothing to cleanup in main(), yet. */
+    /* Make video frame buffer invisible */
+    system("cd ..; ./resetVideo");
 
     exit( status );
 }
