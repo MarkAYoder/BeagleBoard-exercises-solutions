@@ -1,5 +1,8 @@
 DEBUG
 *.o
 *_DEBUG.Beagle
+*.lib
 app_AUDIO
+audioThru_arm
+audioThru_dsp
 
