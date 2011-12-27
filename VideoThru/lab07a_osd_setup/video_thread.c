@@ -15,8 +15,8 @@
 #include     "debug.h"		// DBG and ERR macros
 #include     "video_thread.h"	// Video thread definitions
 #include     "video_osd.h"	// OSD device functions
-#include     "video_output.h"	// Display device functions
-#include     "video_input.h"	// Display device functions
+//#include     "video_output.h"	// Display device functions
+//#include     "video_input.h"	// Display device functions
 
 //* Video capture and display devices used **
 #define     FBVID_GFX      "/dev/fb0"
@@ -92,7 +92,7 @@ void *video_thread_fxn( void *envByRef )
     unsigned int *osdDisplay;	// OSD display buffer
 
     int captureFd = 0;		// Capture driver file descriptor
-    VideoBuffer *vidBufs;	// Capture frame descriptors
+//    VideoBuffer *vidBufs;	// Capture frame descriptors
     unsigned  int numVidBufs = NUM_CAP_BUFS;	// Number of capture frames
     int captureWidth;		// Width of a capture frame
     int captureHeight;		// Height of a capture frame
@@ -150,11 +150,11 @@ void *video_thread_fxn( void *envByRef )
         goto cleanup;
     }
 
-    fclose  ( osdPictureFile );
+    fclose ( osdPictureFile );
 
     DBG( "OSD Picture read successful, placing picture\n" );
 
-    video_osd_place(osdDisplay, picture, 100, 100, PICTURE_WIDTH, PICTURE_HEIGHT);
+    video_osd_place(osdDisplay, picture, 50, 50, PICTURE_WIDTH, PICTURE_HEIGHT);
 
     DBG( "Exited video_thread_fxn processing loop\n" );
 
@@ -174,17 +174,6 @@ cleanup:
     if( initMask & OSDSETUPCOMPLETE ) {
         video_osd_cleanup( osdFd, osdDisplay );
     }
-
-    // Close video capture device
-    if( initMask & CAPTUREDEVICEINITIALIZED ) {
-        video_input_cleanup( captureFd, vidBufs, numVidBufs );
-    }
-
-    // Close video display device
-    if( initMask & DISPLAYDEVICEINITIALIZED ) {
-        video_output_cleanup( fbFd, displays, NUM_DISP_BUFS );
-    }
-
 
     // Return from video_thread_fxn function
     // *************************************
