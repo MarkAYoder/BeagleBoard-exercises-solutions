@@ -51,16 +51,17 @@
 /*                                                                            */
 /******************************************************************************/
 int video_input_setup( int * fdByRef, char * device, VideoBuffer ** vidBufsPtrByRef,
-                       unsigned int * numVidBufsByRef, int * captureWidthByRef, int * captureHeightByRef )
+			unsigned int * numVidBufsByRef, int * captureWidthByRef, 
+			int * captureHeightByRef )
 {
-    struct  v4l2_requestbuffers   req;            //  < buffer request structure >
-    enum  v4l2_buf_type           type;           //  < buffer type >
-    struct  v4l2_buffer           buf;            //  < V4L2 buffer descriptor >
-    VideoBuffer                  *buffersPtr;    //  < ptr to array of buffers >
-    int                           numBufs;        //  < number buffers pointed to by buffersPtr >
+    struct  v4l2_requestbuffers	req;		//  < buffer request structure >
+    enum  v4l2_buf_type		type;		//  < buffer type >
+    struct  v4l2_buffer		buf;		//  < V4L2 buffer descriptor >
+    VideoBuffer			*buffersPtr;    //  < ptr to array of buffers >
+    int				numBufs;        //  < number buffers pointed to by buffersPtr >
 
-    struct  v4l2_format           fmt;            //  < buffer format >
-    int                           captureFd;      //  < video capture file descriptor >
+    struct  v4l2_format		fmt;		//  < buffer format >
+    int				captureFd;	//  < video capture file descriptor >
 
     /* Define a macro to handle the (repetitive) cleanup for a failure */
 #define     failure_procedure( )                                                                                      \
@@ -128,8 +129,7 @@ struct v4l2_input input;
 		f&0xff, (f>>8)&0xff, (f>>16)&0xff, (f>>24)&0xff );
 
     /* Set the video capture format */
-    if( ioctl( captureFd, VIDIOC_S_FMT, &fmt ) == -1 )
-    {
+    if( ioctl( captureFd, VIDIOC_S_FMT, &fmt ) == -1 ) {
         ERR( "VIDIOC_S_FMT failed on file descriptor %d\n", captureFd );
         failure_procedure( ) ;	//    macro defined at top of this function
     }
@@ -173,8 +173,7 @@ struct v4l2_input input;
 
     /* Map the allocated buffers to user space and store their locations   */
     /*     in the array pointed to by buffersPtr.                          */
-    for( numBufs = 0; numBufs < req.count; numBufs++ )
-    {
+    for( numBufs = 0; numBufs < req.count; numBufs++ ) {
         CLEAR( buf );
 
         /* type, memory and index are inputs in the buf structure for      */
@@ -261,9 +260,9 @@ struct v4l2_input input;
 /******************************************************************************/
 int video_input_cleanup( int  fd, VideoBuffer *vidBufsPtr, int  numVidBufs )
 {
-    enum  v4l2_buf_type  type;                                  //  < video buffer type >
-    unsigned  int        i;                                     //  < for loop index >
-              int        status = VIN_SUCCESS;                  //  < return value for function >
+    enum  v4l2_buf_type  type;			//  < video buffer type >
+    unsigned  int        i;			//  < for loop index >
+              int        status = VIN_SUCCESS;	//  < return value for function >
 
     /* Shut off the video capture */
     type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -278,8 +277,7 @@ int video_input_cleanup( int  fd, VideoBuffer *vidBufsPtr, int  numVidBufs )
         if( munmap( vidBufsPtr[ i ].start, vidBufsPtr[ i ].length ) == -1 ) {
             ERR( "Failed to unmap capture buffer %d\n", i );
             status = VIN_FAILURE;
-        }
-        else {
+        } else {
             DBG( "\tunmapped video capture frame, size %d located at %p\n",
                  vidBufsPtr[ i ].length, vidBufsPtr[ i ].start );
         }
