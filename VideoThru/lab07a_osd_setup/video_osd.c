@@ -3,23 +3,22 @@
  */
 
 // Standard Linux headers
-#include     <stdio.h>                          // Always include stdio.h
-#include     <stdlib.h>                         // Always include stdlib.h
-#include     <string.h>                         // Defines memset and memcpy methods
+#include     <stdio.h>		// Always include stdio.h
+#include     <stdlib.h>		// Always include stdlib.h
+#include     <string.h>		// Defines memset and memcpy methods
 
-#include     <fcntl.h>                          // Defines open, read, write methods
-#include     <unistd.h>                         // Defines close and sleep methods
-#include     <sys/mman.h>                       // Defines mmap method
-#include     <sys/ioctl.h>                      // Defines ioctl method
+#include     <fcntl.h>		// Defines open, read, write methods
+#include     <unistd.h>		// Defines close and sleep methods
+#include     <sys/mman.h>	// Defines mmap method
+#include     <sys/ioctl.h>	// Defines ioctl method
 
-#include     <linux/fb.h>                       // Defines framebuffer driver methods
+#include     <linux/fb.h>	// Defines framebuffer driver methods
 
 // Application header files
-#include     "video_osd.h"                      // Video driver definitions
-#include     "debug.h"                          // DBG and ERR macros
+#include     "video_osd.h"	// Video driver definitions
+#include     "debug.h"		// DBG and ERR macros
 
-// Bytes per pixel for gfx window
-#define     SCREEN_BPP     4
+#define     SCREEN_BPP     4	// Bytes per pixel for gfx window
 
 // Global variables to hold osd window attributes
 struct  fb_var_screeninfo  osdInfo;
@@ -82,7 +81,7 @@ int video_osd_setup( int * osdFdByRef, char * osdDevice,
     for(i=0; i<size/4; i++) {
 	(*osdDisplayByRef)[i] = (trans<<24) | 0x00ff0000;	// AARRGGBB
     }
-    DBG( "\tFilled OSD window with pattern: 0x80ff0000\n" );
+    DBG( "\tFilled OSD window with pattern: 0x%08x\n" , (trans<<24) | 0x00ff0000);
 
     return VOSD_SUCCESS;
 }
