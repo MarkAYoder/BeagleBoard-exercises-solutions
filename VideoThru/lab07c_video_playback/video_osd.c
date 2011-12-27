@@ -3,23 +3,22 @@
  */
 
 // Standard Linux headers
-#include     <stdio.h>                          // Always include stdio.h
-#include     <stdlib.h>                         // Always include stdlib.h
-#include     <string.h>                         // Defines memset and memcpy methods
+#include     <stdio.h>		// Always include stdio.h
+#include     <stdlib.h>		// Always include stdlib.h
+#include     <string.h>		// Defines memset and memcpy methods
 
-#include     <fcntl.h>                          // Defines open, read, write methods
-#include     <unistd.h>                         // Defines close and sleep methods
-#include     <sys/mman.h>                       // Defines mmap method
-#include     <sys/ioctl.h>                      // Defines ioctl method
+#include     <fcntl.h>		// Defines open, read, write methods
+#include     <unistd.h>		// Defines close and sleep methods
+#include     <sys/mman.h>	// Defines mmap method
+#include     <sys/ioctl.h>	// Defines ioctl method
 
-#include     <linux/fb.h>                       // Defines framebuffer driver methods
+#include     <linux/fb.h>	// Defines framebuffer driver methods
 
 // Application header files
-#include     "video_osd.h"                      // Video driver definitions
-#include     "debug.h"                          // DBG and ERR macros
+#include     "video_osd.h"	// Video driver definitions
+#include     "debug.h"		// DBG and ERR macros
 
-// Bytes per pixel for video window
-#define     SCREEN_BPP     4
+#define     SCREEN_BPP     4	// Bytes per pixel for gfx window
 
 // Global variables to hold osd window attributes
 struct  fb_var_screeninfo  osdInfo;
@@ -40,7 +39,7 @@ int video_osd_setup( int * osdFdByRef, char * osdDevice,
                      unsigned char  trans, unsigned int ** osdDisplayByRef )
 {
     int size;
-    int i;
+    int i, j;
 
     *osdFdByRef = open( osdDevice, O_RDWR );
 
@@ -79,10 +78,17 @@ int video_osd_setup( int * osdFdByRef, char * osdDevice,
 			*osdDisplayByRef, size, size );
 
     // Fill the window with the new attribute value
-    for(i=0; i<size/4; i++) {
-	(*osdDisplayByRef)[i] = (trans<<24) | 0x00ff0000;	// AARRGGBB
-    }
-    DBG( "\tFilled OSD window with pattern: 0x80ff0000\n" );
+//    for(i=0; i<size/4; i++) {
+//	(*osdDisplayByRef)[i] = (trans<<24) | 0x00ff0000;	// AARRGGBB
+//    }
+    // Fill in the upper left half of the screen
+    for(j=0; j<osdInfo.yres/2; j++)
+	for(i=0; i<osdInfo.xres/2; i++) {
+	    (*osdDisplayByRef)[i + j*osdInfo.xres] = 
+		(trans<<24) | 0x00ff0000;	// AARRGGBB
+	}
+
+    DBG( "\tFilled OSD window with pattern: 0x%08x\n" , (trans<<24) | 0x00ff0000);
 
     return VOSD_SUCCESS;
 }
@@ -111,10 +117,10 @@ int video_osd_place( unsigned int * osdDisplay,
     int i;
     unsigned  int      * displayOrigin;
 
-    displayOrigin = osdDisplay + ( y_offset * osdInfo.xres_virtual ) + x_offset;
+    displayOrigin = osdDisplay + ( y_offset * osdInfo.xres ) + x_offset;
 
     for( i = 0; i < y_picsize; i++ ) {
-        memcpy( displayOrigin + ( i * osdInfo.xres_virtual ), 
+        memcpy( displayOrigin + ( i * osdInfo.xres ), 
 		picture       + ((y_picsize-i-1) * x_picsize ), 
 		( x_picsize<<2 ) );
     }
@@ -187,17 +193,18 @@ int video_osd_circframe( unsigned int * osdDisplay, unsigned int  fillval )
 
     DBG( "Entering video_osd_circframe\n" );
 
-    x_scale = (float) (osdInfo.xres_virtual >> 1);
-    y_scale = (float) (osdInfo.yres >> 1);
+    // Center circle in upper left quarter
+    x_scale = (float) (osdInfo.xres >> 2);
+    y_scale = (float) (osdInfo.yres >> 2);
 
     DBG( "Entering video_osd_circframe for-loop\n" );
 
-    for( j = 0; j < osdInfo.yres; j++ ) {
+    for( j = 0; j < osdInfo.yres/2; j++ ) {
         y = ( float )j - y_scale;
-        for( i = 0; i < osdInfo.xres_virtual; i++ ) {
+        for( i = 0; i < osdInfo.xres/2; i++ ) {
             x = ( float )i - x_scale;
 	    if (((x*x /(x_scale*x_scale)) + (y*y/(y_scale*y_scale))) > 0.9) {
-                osdDisplay[ j * osdInfo.xres_virtual + i ] = fillval;
+                osdDisplay[i + j*osdInfo.xres] = fillval;
             }
         }
     }
