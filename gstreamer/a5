@@ -13,6 +13,10 @@ set -x
 
 # Record to a file
 
+# This doesn't work
 gst-launch alsasrc device="plughw:1,0" num-buffers=$BUFFER ! \
 audio/x-raw-int,rate=8000,channels=1,depth=16 ! alsasink
+
+# This does
+gst-launch alsasrc device="hw:1,0" num-buffers=$BUFFER ! alsasink
 
